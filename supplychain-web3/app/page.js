@@ -72,7 +72,7 @@ export default function Home() {
                 </p>
                 <p className=" font-bold">Current Owner: {order?.tokenOwner}</p>
                 <p className=" font-bold">
-                  Amout in Tokens: {ethers.utils.formatEther(order?.amount)}
+                  Amout in Tokens: {ethers.utils.formatEther(order?.amount)} ETH/POL
                 </p>
               </ModalBody>
               <ModalFooter>
@@ -126,7 +126,7 @@ export default function Home() {
           onChange={recipientInputHandler}
         />
         <Input
-          placeholder="Enter recipient address"
+          placeholder="Enter Token ID"
           value={tokenId}
           onChange={tokenIdInputHandler}
         />
