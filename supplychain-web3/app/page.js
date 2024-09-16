@@ -66,6 +66,15 @@ export default function Home() {
     onOpen();
   };
 
+  function logTimestampAndExecute(handler) {
+    return (event) => {
+      console.log(`Button clicked at: ${new Date().toISOString()}`);
+      if (handler) {
+        handler(event);
+      }
+    };
+  }
+
   return (
     <div className="flex flex-col items-center justify-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <div className="flex flex-row items-center justify-center gap-4 w-full">
@@ -146,7 +155,7 @@ export default function Home() {
         />
         <Button
           size="large"
-          onClick={() => createOrder(merchantAddress, amount)}
+          onClick={logTimestampAndExecute(() => createOrder(merchantAddress, amount))}
         >
           Create
         </Button>
@@ -159,7 +168,7 @@ export default function Home() {
           onChange={orderInputHandler}
           type="number"
         />
-        <Button size="large" onClick={handleTrackOrder}>
+        <Button size="large" onClick={logTimestampAndExecute(handleTrackOrder)}>
           Track
         </Button>
       </div>
@@ -175,7 +184,7 @@ export default function Home() {
           value={tokenId}
           onChange={tokenIdInputHandler}
         />
-        <Button size="large" onClick={() => transferNFT(tokenId, recipient)}>
+        <Button size="large" onClick={logTimestampAndExecute(() => transferNFT(tokenId, recipient))}>
           Transfer
         </Button>
       </div>
@@ -187,7 +196,7 @@ export default function Home() {
           onChange={orderInputHandler}
           type="number"
         />
-        <Button size="large" onClick={() => deliverOrder(orderId)}>
+        <Button size="large" onClick={logTimestampAndExecute(() => deliverOrder(orderId))}>
           Deliver
         </Button>
       </div>
