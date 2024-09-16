@@ -25,6 +25,8 @@ export default function Home() {
   const [amount, setAmount] = useState("");
   const [orderId, setOrderId] = useState("");
   const [order, setOrder] = useState([]);
+  const [recipient, setRecipient] = useState("");
+  const [tokenId, setTokenId] = useState("");
 
   const merchantInputHandler = (e) => {
     setMerchantAddress(e.target.value);
@@ -38,6 +40,14 @@ export default function Home() {
     setOrderId(e.target.value);
   };
 
+  const recipientInputHandler = (e) => {
+    setRecipient(e.target.value);
+  };
+
+  const tokenIdInputHandler = (e) => {
+    setTokenId(e.target.value);
+  };
+
   const handleTrackOrder = async () => {
     const order = await trackOrder(orderId);
     setOrder(order);
@@ -49,6 +59,7 @@ export default function Home() {
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent className="bg-black">
           {(onClose) => (
+            order ? (
             <>
               <ModalHeader className="flex flex-col gap-1">
                 Order Details
@@ -69,7 +80,10 @@ export default function Home() {
                   Close
                 </Button>
               </ModalFooter>
-            </>
+            </>):
+            <ModalHeader className="flex flex-col gap-1">
+              Order not found or Chain mismatch
+            </ModalHeader>
           )}
         </ModalContent>
       </Modal>
@@ -108,10 +122,15 @@ export default function Home() {
         <p className="text-2xl font-bold">Transfer NFT Function</p>
         <Input
           placeholder="Enter recipient address"
-          value={merchantAddress}
-          onChange={merchantInputHandler}
+          value={recipient}
+          onChange={recipientInputHandler}
         />
-        <Button size="large" onClick={() => transferNFT(merchantAddress)}>
+        <Input
+          placeholder="Enter recipient address"
+          value={tokenId}
+          onChange={tokenIdInputHandler}
+        />
+        <Button size="large" onClick={() => transferNFT(tokenId, recipient) }>
           Transfer
         </Button>
       </div>
