@@ -179,6 +179,18 @@ export default function Home() {
           Transfer
         </Button>
       </div>
+      <div className="flex flex-row items-center justify-center gap-4 w-full">
+        <p className="text-2xl font-bold">Deliver Order Function</p>
+        <Input
+          placeholder="Enter order ID"
+          value={orderId}
+          onChange={orderInputHandler}
+          type="number"
+        />
+        <Button size="large" onClick={() => deliverOrder(orderId)}>
+          Deliver
+        </Button>
+      </div>
     </div>
   );
 }

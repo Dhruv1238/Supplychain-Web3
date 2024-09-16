@@ -97,6 +97,8 @@ export function TransactionsProvider({ children }) {
             // Wait for the transaction to be mined
             const receipt = await tx.wait();
 
+            window.alert('Transaction successful:');
+
             console.log('Transaction successful:', receipt);
         } catch (error) {
             console.error('Error creating order:', error);
@@ -104,11 +106,34 @@ export function TransactionsProvider({ children }) {
     }
     async function createOrder(merchantAddress, amount) {
         try {
-            // Ensure signer is available
-            if (!signer) {
-                console.error('Signer is not initialized');
-                return;
+            await ArcanaProvider.init();
+
+            const arcanaProvider = await ArcanaProvider.connect();
+
+            // Check if the user is logged in
+            const isLoggedIn = await arcanaProvider.isLoggedIn();
+            if (!isLoggedIn) {
+                console.log("User is not logged in. Initiating login...");
+                await arcanaProvider.login();
             }
+
+            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
+
+            console.log('Accounts:', accounts);
+
+
+            if (accounts.length === 0) {
+                throw new Error("No accounts found. User might not be logged in.");
+            }
+
+            // Create Web3Provider
+            const provider = new ethers.providers.Web3Provider(arcanaProvider);
+
+            // Create signer using the first account
+            const signer = provider.getSigner(accounts[0]);
+
+            // Verify the signer's address
+            // const signerAddress = await signer.getAddress();
 
             // Create a contract instance
             const contract = new ethers.Contract(contractAddress, abi, signer);
@@ -215,6 +240,7 @@ export function TransactionsProvider({ children }) {
             const receipt = await tx.wait();
 
             console.log('NFT transferred successfully:', receipt);
+            window.alert('NFT transferred successfully:');
             return receipt; // Ensure to return something to indicate success
         } catch (error) {
             console.error('Error transferring NFT:', error);
@@ -241,6 +267,7 @@ export function TransactionsProvider({ children }) {
             const receipt = await tx.wait();
 
             console.log('Order delivered successfully:', receipt);
+            window.alert('Order delivered successfully:');
             return receipt; // Ensure to return something to indicate success
         } catch (error) {
             console.error('Error delivering order:', error);
