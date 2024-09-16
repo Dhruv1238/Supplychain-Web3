@@ -14,10 +14,22 @@ import {
   useDisclosure,
 } from "@nextui-org/modal";
 import { ethers } from "ethers";
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+} from "@nextui-org/dropdown";
 
 export default function Home() {
-  const { createOrder, trackOrder, transferNFT, deliverOrder } =
-    useContext(TransactionContext);
+  const {
+    createOrder,
+    trackOrder,
+    transferNFT,
+    deliverOrder,
+    setContractAddress,
+    contractAddress,
+  } = useContext(TransactionContext);
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -56,35 +68,68 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      <div className="flex flex-row items-center justify-center gap-4 w-full">
+        <p className="font-bold text-2xl">
+          Current Contract: 
+        </p>
+        <Dropdown className="bg-black">
+          <DropdownTrigger>
+            <Button variant="bordered">{contractAddress}</Button>
+          </DropdownTrigger>
+          <DropdownMenu aria-label="Static Actions" className="bg-black">
+            <DropdownItem
+              key="new"
+              onClick={() =>
+                setContractAddress("0xd587D8A253f8d2D5497f05C0343a4A9D816D6103")
+              }
+            >
+              Cardona ZkEvm
+            </DropdownItem>
+            <DropdownItem
+              key="copy"
+              onClick={() =>
+                setContractAddress("0x49650046f3c48e687F432153965Baee0497C45b3")
+              }
+            >
+              Amoy TestNet
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+      </div>
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent className="bg-black">
-          {(onClose) => (
+          {(onClose) =>
             order ? (
-            <>
+              <>
+                <ModalHeader className="flex flex-col gap-1">
+                  Order Details
+                </ModalHeader>
+                <ModalBody>
+                  <p className=" font-bold">Merchant: {order?.merchant}</p>
+                  <p className=" font-bold">Buyer: {order?.buyer}</p>
+                  <p className=" font-bold">
+                    Status: {order?.isCompleted ? "Completed" : "Pending"}
+                  </p>
+                  <p className=" font-bold">
+                    Current Owner: {order?.tokenOwner}
+                  </p>
+                  <p className=" font-bold">
+                    Amout in Tokens: {ethers.utils.formatEther(order?.amount)}{" "}
+                    ETH/POL
+                  </p>
+                </ModalBody>
+                <ModalFooter>
+                  <Button color="danger" variant="light" onPress={onClose}>
+                    Close
+                  </Button>
+                </ModalFooter>
+              </>
+            ) : (
               <ModalHeader className="flex flex-col gap-1">
-                Order Details
+                Order not found or Chain mismatch
               </ModalHeader>
-              <ModalBody>
-                <p className=" font-bold">Merchant: {order?.merchant}</p>
-                <p className=" font-bold">Buyer: {order?.buyer}</p>
-                <p className=" font-bold">
-                  Status: {order?.isCompleted ? "Completed" : "Pending"}
-                </p>
-                <p className=" font-bold">Current Owner: {order?.tokenOwner}</p>
-                <p className=" font-bold">
-                  Amout in Tokens: {ethers.utils.formatEther(order?.amount)} ETH/POL
-                </p>
-              </ModalBody>
-              <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
-                  Close
-                </Button>
-              </ModalFooter>
-            </>):
-            <ModalHeader className="flex flex-col gap-1">
-              Order not found or Chain mismatch
-            </ModalHeader>
-          )}
+            )
+          }
         </ModalContent>
       </Modal>
       <div className="flex flex-row items-center justify-center gap-4 w-full">
@@ -130,7 +175,7 @@ export default function Home() {
           value={tokenId}
           onChange={tokenIdInputHandler}
         />
-        <Button size="large" onClick={() => transferNFT(tokenId, recipient) }>
+        <Button size="large" onClick={() => transferNFT(tokenId, recipient)}>
           Transfer
         </Button>
       </div>

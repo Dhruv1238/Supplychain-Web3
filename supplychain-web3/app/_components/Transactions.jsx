@@ -14,6 +14,8 @@ export function TransactionsProvider({ children }) {
 
     const { loading, isLoggedIn, connect } = useAuth()
 
+    const [contractAddress, setContractAddress] = useState(NEW_CONTRACT_ADDRESS);
+
     async function initializeProviderAndSigner() {
         try {
             // Ensure Arcana provider is initialized
@@ -64,7 +66,6 @@ export function TransactionsProvider({ children }) {
         console.log('Arcana provider connected:', isLoggedIn);
     }, [isLoggedIn]);
 
-    const contractAddress = NEW_CONTRACT_ADDRESS;
     const abi = CONTRACT_ABI;
     const tokenURI = 'https://gateway.pinata.cloud/ipfs/QmdweZsr5amukNQHVjehwM7iQ2euR6vFrY3s4HWCepN9Ro';
 
@@ -249,7 +250,7 @@ export function TransactionsProvider({ children }) {
 
 
     return (
-        <TransactionContext.Provider value={{ createOrder, trackOrder, transferNFT, deliverOrder }}>
+        <TransactionContext.Provider value={{ createOrder, trackOrder, transferNFT, deliverOrder, setContractAddress, contractAddress }}>
             {children}
         </TransactionContext.Provider>
     );

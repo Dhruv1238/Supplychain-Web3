@@ -12,6 +12,7 @@
     "@arcana/auth": "^1.0.11",
     "@arcana/auth-react": "^0.0.3",
     "@nextui-org/button": "^2.0.38",
+    "@nextui-org/dropdown": "^2.1.31",
     "@nextui-org/input": "^2.2.5",
     "@nextui-org/modal": "^2.0.41",
     "@nextui-org/system": "^2.2.6",
