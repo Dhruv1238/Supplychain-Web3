@@ -71,41 +71,6 @@ export function TransactionsProvider({ children }) {
 
     async function createOrder(merchantAddress, amount) {
         try {
-
-            // await ArcanaProvider.init();
-
-            // const ArProvider = await ArcanaProvider.connect();
-
-            // const Provider = new ethers.BrowserProvider(ArProvider);
-            // const Signer = await Provider.getSigner();
-
-            console.log('Provider:', provider);
-            console.log('Signer:', signer);
-
-            // Create a contract instance
-            const contract = new ethers.Contract(contractAddress, abi, signer);
-            console.log('Contract instance created:', contract);
-
-            // Define transaction overrides
-            const overrides = {
-                value: ethers.utils.parseEther(amount),
-            };
-
-            // Call the createOrder function
-            const tx = await contract.createOrder(merchantAddress, overrides.value, tokenURI, overrides);
-
-            // Wait for the transaction to be mined
-            const receipt = await tx.wait();
-
-            window.alert('Transaction successful:');
-
-            console.log('Transaction successful:', receipt);
-        } catch (error) {
-            console.error('Error creating order:', error);
-        }
-    }
-    async function createOrder(merchantAddress, amount) {
-        try {
             await ArcanaProvider.init();
 
             const arcanaProvider = await ArcanaProvider.connect();
@@ -128,12 +93,8 @@ export function TransactionsProvider({ children }) {
 
             // Create Web3Provider
             const provider = new ethers.providers.Web3Provider(arcanaProvider);
-
             // Create signer using the first account
             const signer = provider.getSigner(accounts[0]);
-
-            // Verify the signer's address
-            // const signerAddress = await signer.getAddress();
 
             // Create a contract instance
             const contract = new ethers.Contract(contractAddress, abi, signer);
@@ -149,7 +110,7 @@ export function TransactionsProvider({ children }) {
 
             // Wait for the transaction to be mined
             const receipt = await tx.wait();
-
+            window.alert('Transaction successful:');
             console.log('Transaction successful:', receipt);
         } catch (error) {
             console.error('Error creating order:', error);
@@ -169,7 +130,6 @@ export function TransactionsProvider({ children }) {
             }
 
             const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
-
             console.log('Accounts:', accounts);
 
             if (accounts.length === 0) {
@@ -178,7 +138,6 @@ export function TransactionsProvider({ children }) {
 
             // Create Web3Provider
             const provider = new ethers.providers.Web3Provider(arcanaProvider);
-
             // Create signer using the first account
             const signer = provider.getSigner(accounts[0]);
 
@@ -222,12 +181,8 @@ export function TransactionsProvider({ children }) {
 
             // Create Web3Provider
             const provider = new ethers.providers.Web3Provider(arcanaProvider);
-
             // Create signer using the first account
             const signer = provider.getSigner(accounts[0]);
-
-            // Verify the signer's address
-            // const signerAddress = await signer.getAddress();
 
             // Create a contract instance
             const contract = new ethers.Contract(contractAddress, abi, signer);
@@ -250,11 +205,30 @@ export function TransactionsProvider({ children }) {
 
     async function deliverOrder(orderId) {
         try {
-            // Ensure signer is available
-            if (!signer) {
-                console.error('Signer is not initialized');
-                return;
+            await ArcanaProvider.init();
+
+            const arcanaProvider = await ArcanaProvider.connect();
+
+            // Check if the user is logged in
+            const isLoggedIn = await arcanaProvider.isLoggedIn();
+            if (!isLoggedIn) {
+                console.log("User is not logged in. Initiating login...");
+                await arcanaProvider.login();
             }
+
+            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
+
+            console.log('Accounts:', accounts);
+
+
+            if (accounts.length === 0) {
+                throw new Error("No accounts found. User might not be logged in.");
+            }
+
+            // Create Web3Provider
+            const provider = new ethers.providers.Web3Provider(arcanaProvider);
+            // Create signer using the first account
+            const signer = provider.getSigner(accounts[0]);
 
             // Create a contract instance
             const contract = new ethers.Contract(contractAddress, abi, signer);
