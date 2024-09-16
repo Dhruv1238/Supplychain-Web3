@@ -4,12 +4,11 @@ import { ethers } from 'ethers';
 import { AuthProvider } from "@arcana/auth"
 import { createContext, useState, useEffect } from "react";
 import { useAuth } from "@arcana/auth-react";
+import { ArcanaProvider } from "../providers";
 
 export const TransactionContext = createContext(null);
 
 export function TransactionsProvider({ children }) {
-
-    const ArcanaProvider = new AuthProvider('xar_test_b4e8ce56861ba32cbdf6402c772d3d8d2451d0a1');
 
     let provider, signer;
 
@@ -22,11 +21,36 @@ export function TransactionsProvider({ children }) {
 
             const arcanaProvider = await ArcanaProvider.connect();
 
-            provider = new ethers.providers.Web3Provider(arcanaProvider);
-            signer = await provider.getSigner();
+            // Check if the user is logged in
+            const isLoggedIn = await arcanaProvider.isLoggedIn();
+            if (!isLoggedIn) {
+                console.log("User is not logged in. Initiating login...");
+                await arcanaProvider.login();
+            }
 
+            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
+
+            console.log('Accounts:', accounts);
+
+
+            if (accounts.length === 0) {
+                throw new Error("No accounts found. User might not be logged in.");
+            }
+
+            // Create Web3Provider
+            const provider = new ethers.providers.Web3Provider(arcanaProvider);
+
+            // Create signer using the first account
+            const signer = provider.getSigner(accounts[0]);
+
+            // Verify the signer's address
+            const signerAddress = await signer.getAddress();
+            console.log('Signer address:', signerAddress);
+
+            // Log provider and signer for verification
             console.log('Provider:', provider);
             console.log('Signer:', signer);
+
         } catch (error) {
             console.error('Error during provider and signer initialization:', error);
         }
@@ -107,18 +131,39 @@ export function TransactionsProvider({ children }) {
     }
     async function trackOrder(orderId) {
         try {
-            // Ensure signer is available
-            if (!signer) {
-                console.error('Signer is not initialized');
-                return;
+            await ArcanaProvider.init();
+
+            const arcanaProvider = await ArcanaProvider.connect();
+
+            // Check if the user is logged in
+            const isLoggedIn = await arcanaProvider.isLoggedIn();
+            if (!isLoggedIn) {
+                console.log("User is not logged in. Initiating login...");
+                await arcanaProvider.login();
             }
+
+            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
+
+            console.log('Accounts:', accounts);
+
+            if (accounts.length === 0) {
+                throw new Error("No accounts found. User might not be logged in.");
+            }
+
+            // Create Web3Provider
+            const provider = new ethers.providers.Web3Provider(arcanaProvider);
+
+            // Create signer using the first account
+            const signer = provider.getSigner(accounts[0]);
 
             // Create a contract instance
             const contract = new ethers.Contract(contractAddress, abi, signer);
             console.log('Contract instance created:', contract);
 
+            const orderIdBigNumber = ethers.BigNumber.from(orderId);
+
             // Call the trackOrder function
-            const result = await contract.trackOrder(orderId);
+            const result = await contract.trackOrder(orderIdBigNumber);
 
             console.log('Order tracked:', result);
             return result;
@@ -129,11 +174,34 @@ export function TransactionsProvider({ children }) {
 
     async function transferNFT(tokenId, toAddress) {
         try {
-            // Ensure signer is available
-            if (!signer) {
-                console.error('Signer is not initialized');
-                return;
+            await ArcanaProvider.init();
+
+            const arcanaProvider = await ArcanaProvider.connect();
+
+            // Check if the user is logged in
+            const isLoggedIn = await arcanaProvider.isLoggedIn();
+            if (!isLoggedIn) {
+                console.log("User is not logged in. Initiating login...");
+                await arcanaProvider.login();
             }
+
+            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
+
+            console.log('Accounts:', accounts);
+
+
+            if (accounts.length === 0) {
+                throw new Error("No accounts found. User might not be logged in.");
+            }
+
+            // Create Web3Provider
+            const provider = new ethers.providers.Web3Provider(arcanaProvider);
+
+            // Create signer using the first account
+            const signer = provider.getSigner(accounts[0]);
+
+            // Verify the signer's address
+            // const signerAddress = await signer.getAddress();
 
             // Create a contract instance
             const contract = new ethers.Contract(contractAddress, abi, signer);
