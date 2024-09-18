@@ -87,7 +87,7 @@ export default function Home() {
           </DropdownTrigger>
           <DropdownMenu aria-label="Static Actions" className="bg-black">
             <DropdownItem
-              key="new"
+              key="ZkEvm"
               onClick={() =>
                 setContractAddress("0xd587D8A253f8d2D5497f05C0343a4A9D816D6103")
               }
@@ -95,12 +95,20 @@ export default function Home() {
               Cardona ZkEvm
             </DropdownItem>
             <DropdownItem
-              key="copy"
+              key="Amoy Polygon"
               onClick={() =>
                 setContractAddress("0x49650046f3c48e687F432153965Baee0497C45b3")
               }
             >
               Amoy TestNet
+            </DropdownItem>
+            <DropdownItem
+              key="Sepolia "
+              onClick={() =>
+                setContractAddress("0xa0a180dc4094152f043567cee3d0cf24d4a0e370")
+              }
+            >
+              Sepolia TestNet
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
