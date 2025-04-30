@@ -1,7 +1,7 @@
-'use client';
+"use client";
 import { CONTRACT_ABI, NEW_CONTRACT_ADDRESS } from "./utils/constants";
-import { ethers } from 'ethers';
-import { AuthProvider } from "@arcana/auth"
+import { ethers } from "ethers";
+import { AuthProvider } from "@arcana/auth";
 import { createContext, useState, useEffect } from "react";
 import { useAuth } from "@arcana/auth-react";
 import { ArcanaProvider } from "../providers";
@@ -9,250 +9,361 @@ import { ArcanaProvider } from "../providers";
 export const TransactionContext = createContext(null);
 
 export function TransactionsProvider({ children }) {
+  let provider, signer;
 
-    let provider, signer;
+  const { loading, isLoggedIn, connect } = useAuth();
 
-    const { loading, isLoggedIn, connect } = useAuth()
+  const [contractAddress, setContractAddress] = useState(NEW_CONTRACT_ADDRESS);
 
-    const [contractAddress, setContractAddress] = useState(NEW_CONTRACT_ADDRESS);
+  async function initializeProviderAndSigner() {
+    try {
+      // Ensure Arcana provider is initialized
+      await ArcanaProvider.init();
 
-    async function initializeProviderAndSigner() {
-        try {
-            // Ensure Arcana provider is initialized
-            await ArcanaProvider.init();
+      const arcanaProvider = await ArcanaProvider.connect();
 
-            const arcanaProvider = await ArcanaProvider.connect();
+      // Check if the user is logged in
+      const isLoggedIn = await arcanaProvider.isLoggedIn();
+      if (!isLoggedIn) {
+        console.log("User is not logged in. Initiating login...");
+        await arcanaProvider.login();
+      }
 
-            // Check if the user is logged in
-            const isLoggedIn = await arcanaProvider.isLoggedIn();
-            if (!isLoggedIn) {
-                console.log("User is not logged in. Initiating login...");
-                await arcanaProvider.login();
-            }
+      const accounts = await arcanaProvider.request({ method: "eth_accounts" });
 
-            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
+      console.log("Accounts:", accounts);
 
-            console.log('Accounts:', accounts);
+      if (accounts.length === 0) {
+        throw new Error("No accounts found. User might not be logged in.");
+      }
 
+      // Create Web3Provider
+      const provider = new ethers.providers.Web3Provider(arcanaProvider);
 
-            if (accounts.length === 0) {
-                throw new Error("No accounts found. User might not be logged in.");
-            }
+      // Create signer using the first account
+      const signer = provider.getSigner(accounts[0]);
 
-            // Create Web3Provider
-            const provider = new ethers.providers.Web3Provider(arcanaProvider);
+      // Verify the signer's address
+      const signerAddress = await signer.getAddress();
+      console.log("Signer address:", signerAddress);
 
-            // Create signer using the first account
-            const signer = provider.getSigner(accounts[0]);
+      // Log provider and signer for verification
+      console.log("Provider:", provider);
+      console.log("Signer:", signer);
+    } catch (error) {
+      console.error("Error during provider and signer initialization:", error);
+    }
+  }
 
-            // Verify the signer's address
-            const signerAddress = await signer.getAddress();
-            console.log('Signer address:', signerAddress);
+//   useEffect(() => {
+//     initializeProviderAndSigner();
+//     console.log("Provider and Signer initialized");
+//     console.log("Provider:", provider);
+//     console.log("Signer:", signer);
+//     console.log("Arcana provider connected:", isLoggedIn);
+//   }, [isLoggedIn]);
 
-            // Log provider and signer for verification
-            console.log('Provider:', provider);
-            console.log('Signer:', signer);
+  const abi = CONTRACT_ABI;
+  const tokenURI =
+    "https://gateway.pinata.cloud/ipfs/QmdweZsr5amukNQHVjehwM7iQ2euR6vFrY3s4HWCepN9Ro";
 
-        } catch (error) {
-            console.error('Error during provider and signer initialization:', error);
-        }
+  async function createOrder(merchantAddress, amount) {
+    try {
+      await ArcanaProvider.init();
+
+      const arcanaProvider = await ArcanaProvider.connect();
+
+      // Check if the user is logged in
+      const isLoggedIn = await arcanaProvider.isLoggedIn();
+      if (!isLoggedIn) {
+        console.log("User is not logged in. Initiating login...");
+        await arcanaProvider.login();
+      }
+
+      const accounts = await arcanaProvider.request({ method: "eth_accounts" });
+
+      console.log("Accounts:", accounts);
+
+      if (accounts.length === 0) {
+        throw new Error("No accounts found. User might not be logged in.");
+      }
+
+      // Create Web3Provider
+      const provider = new ethers.providers.Web3Provider(arcanaProvider);
+      // Create signer using the first account
+      const signer = provider.getSigner(accounts[0]);
+
+      // Create a contract instance
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      console.log("Contract instance created:", contract);
+
+      // Define transaction overrides
+      const overrides = {
+        value: ethers.utils.parseEther(amount),
+      };
+
+      // Call the createOrder function
+      const tx = await contract.createOrder(
+        merchantAddress,
+        overrides.value,
+        tokenURI,
+        overrides
+      );
+
+      // Wait for the transaction to be mined
+      const receipt = await tx.wait();
+      window.alert("Transaction successful:");
+      console.log("Transaction successful:", receipt);
+    } catch (error) {
+      console.error("Error creating order:", error);
+    }
+  }
+
+  async function trackOrder(orderId) {
+    try {
+      await ArcanaProvider.init();
+
+      const arcanaProvider = await ArcanaProvider.connect();
+
+      // Check if the user is logged in
+      const isLoggedIn = await arcanaProvider.isLoggedIn();
+      if (!isLoggedIn) {
+        console.log("User is not logged in. Initiating login...");
+        await arcanaProvider.login();
+      }
+
+      const accounts = await arcanaProvider.request({ method: "eth_accounts" });
+      console.log("Accounts:", accounts);
+
+      if (accounts.length === 0) {
+        throw new Error("No accounts found. User might not be logged in.");
+      }
+
+      // Create Web3Provider
+      const provider = new ethers.providers.Web3Provider(arcanaProvider);
+      // Create signer using the first account
+      const signer = provider.getSigner(accounts[0]);
+
+      // Create a contract instance
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      console.log("Contract instance created:", contract);
+
+      const orderIdBigNumber = ethers.BigNumber.from(orderId);
+
+      // Call the trackOrder function
+      const result = await contract.trackOrder(orderIdBigNumber);
+
+      console.log("Order tracked:", result);
+      return result;
+    } catch (error) {
+      console.error("Error tracking order:", error);
+    }
+  }
+
+  async function transferNFT(tokenId, toAddress) {
+    try {
+      await ArcanaProvider.init();
+
+      const arcanaProvider = await ArcanaProvider.connect();
+
+      // Check if the user is logged in
+      const isLoggedIn = await arcanaProvider.isLoggedIn();
+      if (!isLoggedIn) {
+        console.log("User is not logged in. Initiating login...");
+        await arcanaProvider.login();
+      }
+
+      const accounts = await arcanaProvider.request({ method: "eth_accounts" });
+
+      console.log("Accounts:", accounts);
+
+      if (accounts.length === 0) {
+        throw new Error("No accounts found. User might not be logged in.");
+      }
+
+      // Create Web3Provider
+      const provider = new ethers.providers.Web3Provider(arcanaProvider);
+      // Create signer using the first account
+      const signer = provider.getSigner(accounts[0]);
+
+      // Create a contract instance
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      console.log("Contract instance created:", contract);
+
+      // Call the transferNFT function
+      const tx = await contract.transferNFT(tokenId, toAddress);
+
+      // Wait for the transaction to be mined
+      const receipt = await tx.wait();
+
+      console.log("NFT transferred successfully:", receipt);
+      window.alert("NFT transferred successfully:");
+      return receipt; // Ensure to return something to indicate success
+    } catch (error) {
+      console.error("Error transferring NFT:", error);
+      throw error; // Rethrow the error to handle it in the calling function
+    }
+  }
+
+  async function deliverOrder(orderId) {
+    try {
+      await ArcanaProvider.init();
+
+      const arcanaProvider = await ArcanaProvider.connect();
+
+      // Check if the user is logged in
+      const isLoggedIn = await arcanaProvider.isLoggedIn();
+      if (!isLoggedIn) {
+        console.log("User is not logged in. Initiating login...");
+        await arcanaProvider.login();
+      }
+
+      const accounts = await arcanaProvider.request({ method: "eth_accounts" });
+
+      console.log("Accounts:", accounts);
+
+      if (accounts.length === 0) {
+        throw new Error("No accounts found. User might not be logged in.");
+      }
+
+      // Create Web3Provider
+      const provider = new ethers.providers.Web3Provider(arcanaProvider);
+      // Create signer using the first account
+      const signer = provider.getSigner(accounts[0]);
+
+      // Create a contract instance
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      console.log("Contract instance created:", contract);
+
+      // Call the deliverOrder function
+      const tx = await contract.deliverOrder(orderId);
+
+      // Wait for the transaction to be mined
+      const receipt = await tx.wait();
+
+      console.log("Order delivered successfully:", receipt);
+      window.alert("Order delivered successfully:");
+      return receipt; // Ensure to return something to indicate success
+    } catch (error) {
+      console.error("Error delivering order:", error);
+      throw error; // Rethrow the error to handle it in the calling function
+    }
+  }
+
+  async function initializeMetaMaskProviderAndSigner() {
+    if (!window.ethereum) {
+      throw new Error(
+        "MetaMask is not installed. Please install it to use this feature."
+      );
     }
 
-    useEffect(() => {
-        initializeProviderAndSigner();
-        console.log('Provider and Signer initialized');
-        console.log('Provider:', provider);
-        console.log('Signer:', signer);
-        console.log('Arcana provider connected:', isLoggedIn);
-    }, [isLoggedIn]);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const accounts = await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner(accounts[0]);
 
-    const abi = CONTRACT_ABI;
-    const tokenURI = 'https://gateway.pinata.cloud/ipfs/QmdweZsr5amukNQHVjehwM7iQ2euR6vFrY3s4HWCepN9Ro';
+    console.log("MetaMask Accounts:", accounts);
+    console.log("MetaMask Signer:", signer);
 
-    async function createOrder(merchantAddress, amount) {
-        try {
-            await ArcanaProvider.init();
+    return { provider, signer };
+  }
 
-            const arcanaProvider = await ArcanaProvider.connect();
+  async function createOrderMetaMask(merchantAddress, amount) {
+    try {
+      const { provider, signer } = await initializeMetaMaskProviderAndSigner();
 
-            // Check if the user is logged in
-            const isLoggedIn = await arcanaProvider.isLoggedIn();
-            if (!isLoggedIn) {
-                console.log("User is not logged in. Initiating login...");
-                await arcanaProvider.login();
-            }
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      console.log("MetaMask Contract instance created:", contract);
 
-            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
+      const overrides = {
+        value: ethers.utils.parseEther(amount),
+      };
 
-            console.log('Accounts:', accounts);
+      const tx = await contract.createOrder(
+        merchantAddress,
+        overrides.value,
+        tokenURI,
+        overrides
+      );
+      const receipt = await tx.wait();
 
-
-            if (accounts.length === 0) {
-                throw new Error("No accounts found. User might not be logged in.");
-            }
-
-            // Create Web3Provider
-            const provider = new ethers.providers.Web3Provider(arcanaProvider);
-            // Create signer using the first account
-            const signer = provider.getSigner(accounts[0]);
-
-            // Create a contract instance
-            const contract = new ethers.Contract(contractAddress, abi, signer);
-            console.log('Contract instance created:', contract);
-
-            // Define transaction overrides
-            const overrides = {
-                value: ethers.utils.parseEther(amount),
-            };
-
-            // Call the createOrder function
-            const tx = await contract.createOrder(merchantAddress, overrides.value, tokenURI, overrides);
-
-            // Wait for the transaction to be mined
-            const receipt = await tx.wait();
-            window.alert('Transaction successful:');
-            console.log('Transaction successful:', receipt);
-        } catch (error) {
-            console.error('Error creating order:', error);
-        }
+      window.alert("Transaction successful with MetaMask:");
+      console.log("Transaction successful with MetaMask:", receipt);
+    } catch (error) {
+      console.error("Error creating order with MetaMask:", error);
     }
-    async function trackOrder(orderId) {
-        try {
-            await ArcanaProvider.init();
+  }
 
-            const arcanaProvider = await ArcanaProvider.connect();
+  async function trackOrderMetaMask(orderId) {
+    try {
+      const { provider, signer } = await initializeMetaMaskProviderAndSigner();
 
-            // Check if the user is logged in
-            const isLoggedIn = await arcanaProvider.isLoggedIn();
-            if (!isLoggedIn) {
-                console.log("User is not logged in. Initiating login...");
-                await arcanaProvider.login();
-            }
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      console.log("MetaMask Contract instance created:", contract);
 
-            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
-            console.log('Accounts:', accounts);
+      const orderIdBigNumber = ethers.BigNumber.from(orderId);
+      const result = await contract.trackOrder(orderIdBigNumber);
 
-            if (accounts.length === 0) {
-                throw new Error("No accounts found. User might not be logged in.");
-            }
-
-            // Create Web3Provider
-            const provider = new ethers.providers.Web3Provider(arcanaProvider);
-            // Create signer using the first account
-            const signer = provider.getSigner(accounts[0]);
-
-            // Create a contract instance
-            const contract = new ethers.Contract(contractAddress, abi, signer);
-            console.log('Contract instance created:', contract);
-
-            const orderIdBigNumber = ethers.BigNumber.from(orderId);
-
-            // Call the trackOrder function
-            const result = await contract.trackOrder(orderIdBigNumber);
-
-            console.log('Order tracked:', result);
-            return result;
-        } catch (error) {
-            console.error('Error tracking order:', error);
-        }
+      console.log("Order tracked with MetaMask:", result);
+      return result;
+    } catch (error) {
+      console.error("Error tracking order with MetaMask:", error);
     }
+  }
 
-    async function transferNFT(tokenId, toAddress) {
-        try {
-            await ArcanaProvider.init();
+  async function transferNFTMetaMask(tokenId, toAddress) {
+    try {
+      const { provider, signer } = await initializeMetaMaskProviderAndSigner();
 
-            const arcanaProvider = await ArcanaProvider.connect();
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      console.log("MetaMask Contract instance created:", contract);
 
-            // Check if the user is logged in
-            const isLoggedIn = await arcanaProvider.isLoggedIn();
-            if (!isLoggedIn) {
-                console.log("User is not logged in. Initiating login...");
-                await arcanaProvider.login();
-            }
+      const tx = await contract.transferNFT(tokenId, toAddress);
+      const receipt = await tx.wait();
 
-            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
-
-            console.log('Accounts:', accounts);
-
-
-            if (accounts.length === 0) {
-                throw new Error("No accounts found. User might not be logged in.");
-            }
-
-            // Create Web3Provider
-            const provider = new ethers.providers.Web3Provider(arcanaProvider);
-            // Create signer using the first account
-            const signer = provider.getSigner(accounts[0]);
-
-            // Create a contract instance
-            const contract = new ethers.Contract(contractAddress, abi, signer);
-            console.log('Contract instance created:', contract);
-
-            // Call the transferNFT function
-            const tx = await contract.transferNFT(tokenId, toAddress);
-
-            // Wait for the transaction to be mined
-            const receipt = await tx.wait();
-
-            console.log('NFT transferred successfully:', receipt);
-            window.alert('NFT transferred successfully:');
-            return receipt; // Ensure to return something to indicate success
-        } catch (error) {
-            console.error('Error transferring NFT:', error);
-            throw error; // Rethrow the error to handle it in the calling function
-        }
+      console.log("NFT transferred successfully with MetaMask:", receipt);
+      window.alert("NFT transferred successfully with MetaMask:");
+      return receipt;
+    } catch (error) {
+      console.error("Error transferring NFT with MetaMask:", error);
+      throw error;
     }
+  }
 
-    async function deliverOrder(orderId) {
-        try {
-            await ArcanaProvider.init();
+  async function deliverOrderMetaMask(orderId) {
+    try {
+      const { provider, signer } = await initializeMetaMaskProviderAndSigner();
 
-            const arcanaProvider = await ArcanaProvider.connect();
+      const contract = new ethers.Contract(contractAddress, abi, signer);
+      console.log("MetaMask Contract instance created:", contract);
 
-            // Check if the user is logged in
-            const isLoggedIn = await arcanaProvider.isLoggedIn();
-            if (!isLoggedIn) {
-                console.log("User is not logged in. Initiating login...");
-                await arcanaProvider.login();
-            }
+      const tx = await contract.deliverOrder(orderId);
+      const receipt = await tx.wait();
 
-            const accounts = await arcanaProvider.request({ method: 'eth_accounts' });
-
-            console.log('Accounts:', accounts);
-
-
-            if (accounts.length === 0) {
-                throw new Error("No accounts found. User might not be logged in.");
-            }
-
-            // Create Web3Provider
-            const provider = new ethers.providers.Web3Provider(arcanaProvider);
-            // Create signer using the first account
-            const signer = provider.getSigner(accounts[0]);
-
-            // Create a contract instance
-            const contract = new ethers.Contract(contractAddress, abi, signer);
-            console.log('Contract instance created:', contract);
-
-            // Call the deliverOrder function
-            const tx = await contract.deliverOrder(orderId);
-
-            // Wait for the transaction to be mined
-            const receipt = await tx.wait();
-
-            console.log('Order delivered successfully:', receipt);
-            window.alert('Order delivered successfully:');
-            return receipt; // Ensure to return something to indicate success
-        } catch (error) {
-            console.error('Error delivering order:', error);
-            throw error; // Rethrow the error to handle it in the calling function
-        }
+      console.log("Order delivered successfully with MetaMask:", receipt);
+      window.alert("Order delivered successfully with MetaMask:");
+      return receipt;
+    } catch (error) {
+      console.error("Error delivering order with MetaMask:", error);
+      throw error;
     }
+  }
 
-
-    return (
-        <TransactionContext.Provider value={{ createOrder, trackOrder, transferNFT, deliverOrder, setContractAddress, contractAddress }}>
-            {children}
-        </TransactionContext.Provider>
-    );
+  return (
+    <TransactionContext.Provider
+      value={{
+        createOrder,
+        trackOrder,
+        transferNFT,
+        deliverOrder,
+        setContractAddress,
+        contractAddress,
+        createOrderMetaMask,
+        trackOrderMetaMask,
+        transferNFTMetaMask,
+        deliverOrderMetaMask,
+      }}
+    >
+      {children}
+    </TransactionContext.Provider>
+  );
 }

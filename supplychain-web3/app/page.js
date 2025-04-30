@@ -23,10 +23,10 @@ import {
 
 export default function Home() {
   const {
-    createOrder,
-    trackOrder,
-    transferNFT,
-    deliverOrder,
+    createOrderMetaMask,
+    trackOrderMetaMask,
+    transferNFTMetaMask,
+    deliverOrderMetaMask,
     setContractAddress,
     contractAddress,
   } = useContext(TransactionContext);
@@ -61,7 +61,7 @@ export default function Home() {
   };
 
   const handleTrackOrder = async () => {
-    const order = await trackOrder(orderId);
+    const order = await trackOrderMetaMask(orderId);
     setOrder(order);
     onOpen();
   };
@@ -78,14 +78,20 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <div className="flex flex-row items-center justify-center gap-4 w-full">
-        <p className="font-bold text-2xl">
-          Current Contract: 
-        </p>
+        <p className="font-bold text-2xl">Current Contract:</p>
         <Dropdown className="bg-black">
           <DropdownTrigger>
             <Button variant="bordered">{contractAddress}</Button>
           </DropdownTrigger>
           <DropdownMenu aria-label="Static Actions" className="bg-black">
+          <DropdownItem
+              key="SusChain"
+              onClick={() =>
+                setContractAddress("0x31429fc399d9526Ab2c2F65c0a4Bc2415b50be75")
+              }
+            >
+              SusChain TestNet
+            </DropdownItem>
             <DropdownItem
               key="ZkEvm"
               onClick={() =>
@@ -163,7 +169,9 @@ export default function Home() {
         />
         <Button
           size="large"
-          onClick={logTimestampAndExecute(() => createOrder(merchantAddress, amount))}
+          onClick={logTimestampAndExecute(() =>
+            createOrderMetaMask(merchantAddress, amount)
+          )}
         >
           Create
         </Button>
@@ -192,7 +200,12 @@ export default function Home() {
           value={tokenId}
           onChange={tokenIdInputHandler}
         />
-        <Button size="large" onClick={logTimestampAndExecute(() => transferNFT(tokenId, recipient))}>
+        <Button
+          size="large"
+          onClick={logTimestampAndExecute(() =>
+            transferNFTMetaMask(tokenId, recipient)
+          )}
+        >
           Transfer
         </Button>
       </div>
@@ -204,7 +217,10 @@ export default function Home() {
           onChange={orderInputHandler}
           type="number"
         />
-        <Button size="large" onClick={logTimestampAndExecute(() => deliverOrder(orderId))}>
+        <Button
+          size="large"
+          onClick={logTimestampAndExecute(() => deliverOrderMetaMask(orderId))}
+        >
           Deliver
         </Button>
       </div>
